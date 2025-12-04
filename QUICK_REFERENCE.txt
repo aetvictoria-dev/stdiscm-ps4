@@ -1,0 +1,223 @@
+================================================================================
+DISTRIBUTED OCR SYSTEM - QUICK REFERENCE CARD
+================================================================================
+
+PROJECT LOCATION: /Users/alfredvictoria/Dev/stdiscm-ps4
+
+================================================================================
+SETUP COMMANDS
+================================================================================
+
+1. TEST DEPENDENCIES:
+   ./test_setup.sh
+
+2. AUTO INSTALL & BUILD:
+   ./setup.sh
+
+3. MANUAL BUILD:
+   mkdir build && cd build
+   cmake ..
+   cmake --build . -j4
+
+   macOS (if Qt not found):
+   cmake -DCMAKE_PREFIX_PATH=$(brew --prefix qt5) ..
+
+================================================================================
+RUN COMMANDS
+================================================================================
+
+SERVER (run first):
+   cd build
+   ./server/ocr_server [address:port] [threads]
+
+   Examples:
+   ./server/ocr_server                    # Default: 0.0.0.0:50051, 4 threads
+   ./server/ocr_server 0.0.0.0:50051 8   # Custom: 8 threads
+
+CLIENT (run second):
+   cd build
+   ./client/ocr_client
+
+   In GUI, set server address to:
+   - localhost:50051        (same machine)
+   - 192.168.1.X:50051      (different machine, use actual IP)
+
+================================================================================
+NETWORK SETUP
+================================================================================
+
+FIND SERVER IP:
+   ip addr show              # Linux
+   ifconfig                  # macOS
+
+OPEN FIREWALL:
+   sudo ufw allow 50051                              # Ubuntu
+   sudo firewall-cmd --add-port=50051/tcp --reload   # Fedora
+
+TEST CONNECTION:
+   ping <server-ip>
+   telnet <server-ip> 50051
+   nc -zv <server-ip> 50051
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+BUILD FAILS:
+   Qt5 not found → cmake -DCMAKE_PREFIX_PATH=$(brew --prefix qt5) ..
+   gRPC not found → brew install grpc (macOS) / apt install libgrpc++-dev (Ubuntu)
+
+CLIENT CAN'T CONNECT:
+   1. Check server is running: ps aux | grep ocr_server
+   2. Verify IP address and port
+   3. Test connectivity: telnet <server-ip> 50051
+   4. Check firewall settings
+
+SERVER CRASHES:
+   "Could not initialize tesseract"
+   → sudo apt install tesseract-ocr-eng (Ubuntu)
+   → brew install tesseract (macOS)
+
+================================================================================
+DOCUMENTATION FILES
+================================================================================
+
+GETTING_STARTED.md    → Read this FIRST - quick overview
+SETUP_GUIDE.md        → Detailed setup for single/multi-machine
+README.md             → Full documentation and architecture
+DEMONSTRATION.md      → Guide for creating demo video
+QUICK_REFERENCE.txt   → This file - command cheat sheet
+
+================================================================================
+PROJECT STRUCTURE
+================================================================================
+
+proto/
+  └─ ocr_service.proto       # gRPC service definition
+
+server/
+  ├─ main.cpp                # Server entry point
+  ├─ ocr_server.h            # Server header
+  ├─ ocr_server.cpp          # Server implementation
+  └─ CMakeLists.txt          # Build config
+
+client/
+  ├─ main.cpp                # Client entry point
+  ├─ ocr_client.h            # Client header
+  ├─ ocr_client.cpp          # Client implementation (Qt GUI)
+  └─ CMakeLists.txt          # Build config
+
+================================================================================
+DEPENDENCIES
+================================================================================
+
+REQUIRED:
+  - CMake (>= 3.15)
+  - C++ compiler (GCC/Clang/MSVC with C++17)
+  - Qt 5 (Core + Widgets)
+  - gRPC + Protocol Buffers
+  - Tesseract OCR (>= 4.0)
+  - Leptonica
+
+INSTALL ON UBUNTU:
+  sudo apt install cmake build-essential qt5-default \
+    libgrpc++-dev libprotobuf-dev protobuf-compiler-grpc \
+    libtesseract-dev libleptonica-dev tesseract-ocr-eng
+
+INSTALL ON MACOS:
+  brew install cmake qt5 grpc protobuf tesseract leptonica
+
+================================================================================
+TESTING SCENARIOS
+================================================================================
+
+1. Single image upload
+2. Multiple images (10+) - watch parallel processing
+3. Add images mid-batch - progress bar updates
+4. Complete batch (100%) - next upload clears results
+5. Stop server while processing - error handling
+6. Different formats (PNG, JPG, BMP, TIFF)
+7. Large images (high resolution)
+
+================================================================================
+KEY FEATURES TO DEMONSTRATE
+================================================================================
+
+✓ Multithreading         Server uses thread pool (4+ worker threads)
+✓ Synchronization        Mutex + condition variable for task queue
+✓ GUI Implementation     Qt with progress bar and grid layout
+✓ IPC                    gRPC streaming for real-time results
+✓ Fault Tolerance        Connection error handling and recovery
+
+================================================================================
+SUBMISSION REQUIREMENTS
+================================================================================
+
+1. Presentation slides (PDF) covering:
+   - Multithreading
+   - Synchronization
+   - GUI Implementation
+   - Interprocess Communication
+   - Fault Tolerance
+
+2. Demo video (MP4, 5-10 minutes) showing:
+   - System running on different machines
+   - All testing scenarios
+   - Code walkthrough
+   - Explanation of features
+
+3. Source code (this entire project)
+
+================================================================================
+COMMON ISSUES & FIXES
+================================================================================
+
+ISSUE: Qt5 not found during build
+FIX: cmake -DCMAKE_PREFIX_PATH=$(brew --prefix qt5) ..
+
+ISSUE: Client can't connect to server
+FIX: Check server IP, verify firewall allows port 50051
+
+ISSUE: Tesseract init fails
+FIX: Install language data (tesseract-ocr-eng)
+
+ISSUE: Build succeeds but executables not found
+FIX: Check build/server/ and build/client/ directories
+
+ISSUE: VM can't communicate with host
+FIX: Set VM network to "Bridged" mode
+
+================================================================================
+USEFUL COMMANDS
+================================================================================
+
+Find server IP:          ip addr show | grep inet
+Check if port open:      netstat -tulpn | grep 50051
+Test server running:     ps aux | grep ocr_server
+Monitor server logs:     tail -f server.log (if logging enabled)
+Clean build:             rm -rf build && mkdir build
+Force rebuild:           cd build && cmake .. && cmake --build . --clean-first
+
+================================================================================
+PERFORMANCE TIPS
+================================================================================
+
+1. Increase worker threads on powerful machines:
+   ./server/ocr_server 0.0.0.0:50051 8
+
+2. Use wired ethernet for better network performance
+
+3. Preprocess images for better OCR (high contrast, no rotation)
+
+4. Monitor server with: htop (install: sudo apt install htop)
+
+================================================================================
+FOR MORE HELP
+================================================================================
+
+Detailed setup:        SETUP_GUIDE.md
+Architecture details:  README.md
+Demo preparation:      DEMONSTRATION.md
+Getting started:       GETTING_STARTED.md
+
+================================================================================

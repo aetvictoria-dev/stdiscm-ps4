@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package ocrservice;
+
+service OCRService {
+  rpc ProcessImage(ImageRequest) returns (stream OCRResponse);
+}
+
+message ImageRequest {
+  bytes image_data = 1;
+  string image_id = 2;
+}
+
+message OCRResponse {
+  string image_id = 1;
+  string extracted_text = 2;
+  bool success = 3;
+  string error_message = 4;
+}
