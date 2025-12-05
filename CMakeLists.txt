@@ -7,29 +7,41 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Protobuf REQUIRED)
-find_package(gRPC REQUIRED)
-find_package(Tesseract REQUIRED)
-find_package(Leptonica REQUIRED)
+# Find packages
+find_package(Protobuf CONFIG REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
 find_package(Qt5 COMPONENTS Core Widgets REQUIRED)
 
+# Find Tesseract and Leptonica using pkg-config
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TESSERACT REQUIRED tesseract)
+pkg_check_modules(LEPTONICA REQUIRED lept)
+
+# Set proto files
 set(PROTO_FILES proto/ocr_service.proto)
 
-add_library(ocr_proto ${PROTO_FILES})
+# Generate protobuf files
+set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/ocr_service.pb.cc")
+set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/ocr_service.pb.h")
+set(GRPC_SRCS "${CMAKE_CURRENT_BINARY_DIR}/ocr_service.grpc.pb.cc")
+set(GRPC_HDRS "${CMAKE_CURRENT_BINARY_DIR}/ocr_service.grpc.pb.h")
+
+add_custom_command(
+    OUTPUT "${PROTO_SRCS}" "${PROTO_HDRS}" "${GRPC_SRCS}" "${GRPC_HDRS}"
+    COMMAND protobuf::protoc
+    ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
+         --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
+         -I "${CMAKE_CURRENT_SOURCE_DIR}/proto"
+         --plugin=protoc-gen-grpc=$<TARGET_FILE:gRPC::grpc_cpp_plugin>
+         "${CMAKE_CURRENT_SOURCE_DIR}/proto/ocr_service.proto"
+    DEPENDS "${PROTO_FILES}")
+
+add_library(ocr_proto ${PROTO_SRCS} ${GRPC_SRCS})
 target_link_libraries(ocr_proto
     PUBLIC
         protobuf::libprotobuf
         gRPC::grpc++
 )
-
-get_target_property(grpc_cpp_plugin_location gRPC::grpc_cpp_plugin LOCATION)
-
-protobuf_generate(TARGET ocr_proto LANGUAGE cpp)
-protobuf_generate(TARGET ocr_proto LANGUAGE grpc
-    GENERATE_EXTENSIONS .grpc.pb.h .grpc.pb.cc
-    PLUGIN "protoc-gen-grpc=${grpc_cpp_plugin_location}"
-)
-
 target_include_directories(ocr_proto PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(server)

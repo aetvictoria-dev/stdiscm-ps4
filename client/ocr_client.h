@@ -11,6 +11,7 @@
 #include <QFileDialog>
 #include <QThread>
 #include <QMutex>
+#include <QLineEdit>
 #include <grpcpp/grpcpp.h>
 #include <memory>
 #include <atomic>

@@ -9,12 +9,13 @@ target_link_libraries(ocr_server
         ocr_proto
         gRPC::grpc++
         protobuf::libprotobuf
-        Tesseract::libtesseract
-        ${Leptonica_LIBRARIES}
+        ${TESSERACT_LDFLAGS}
+        ${LEPTONICA_LDFLAGS}
 )
 
 target_include_directories(ocr_server
     PRIVATE
         ${CMAKE_CURRENT_BINARY_DIR}
-        ${Leptonica_INCLUDE_DIRS}
+        ${TESSERACT_INCLUDE_DIRS}
+        ${LEPTONICA_INCLUDE_DIRS}
 )
