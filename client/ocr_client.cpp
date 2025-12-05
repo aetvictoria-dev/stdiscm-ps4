@@ -4,6 +4,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLineEdit>
+#include <QFileInfo>
 #include <fstream>
 #include <iostream>
 
@@ -84,7 +85,8 @@ void OCRWorker::run() {
 
         ocrservice::ImageRequest request;
         request.set_image_data(imageData.data(), imageData.size());
-        request.set_image_id(QString::number(i).toStdString());
+        QFileInfo fileInfo(imagePath);
+        request.set_image_id(fileInfo.fileName().toStdString());
 
         grpc::ClientContext context;
         context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(60));
