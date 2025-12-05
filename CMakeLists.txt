@@ -46,3 +46,4 @@ target_include_directories(ocr_proto PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(server)
 add_subdirectory(client)
+

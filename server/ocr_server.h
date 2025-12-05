@@ -26,7 +26,9 @@ private:
         std::string image_id;
         std::vector<uint8_t> image_data;
         grpc::ServerWriter<ocrservice::OCRResponse>* writer;
-        std::mutex* writer_mutex;
+        std::shared_ptr<std::mutex> writer_mutex;
+        std::shared_ptr<std::condition_variable> done_cv;
+        std::shared_ptr<bool> done;
     };
 
     void WorkerThread();

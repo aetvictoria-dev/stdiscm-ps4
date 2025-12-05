@@ -231,6 +231,7 @@ void MainWindow::onUploadClicked() {
     }
 
     worker_ = new OCRWorker(serverAddressEdit_->text(), filePaths, this);
+    worker_->setProperty("startIndex", startIndex);
     connect(worker_, &OCRWorker::resultReady, this, &MainWindow::onResultReady);
     connect(worker_, &OCRWorker::errorOccurred, this, &MainWindow::onErrorOccurred);
     connect(worker_, &OCRWorker::progressUpdated, this, &MainWindow::onProgressUpdated);
@@ -240,7 +241,7 @@ void MainWindow::onUploadClicked() {
 
 void MainWindow::onResultReady(int index, const QString& text) {
     QMutexLocker locker(&mutex_);
-    int actualIndex = imageResults_.size() - worker_->property("batchSize").toInt() + index;
+    int actualIndex = worker_->property("startIndex").toInt() + index;
     if (actualIndex >= 0 && actualIndex < imageResults_.size()) {
         imageResults_[actualIndex]->setResult(text);
     }
@@ -248,7 +249,7 @@ void MainWindow::onResultReady(int index, const QString& text) {
 
 void MainWindow::onErrorOccurred(int index, const QString& error) {
     QMutexLocker locker(&mutex_);
-    int actualIndex = imageResults_.size() - worker_->property("batchSize").toInt() + index;
+    int actualIndex = worker_->property("startIndex").toInt() + index;
     if (actualIndex >= 0 && actualIndex < imageResults_.size()) {
         imageResults_[actualIndex]->setError(error);
     }

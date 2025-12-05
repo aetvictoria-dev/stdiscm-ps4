@@ -32,27 +32,19 @@ grpc::Status OCRServiceImpl::ProcessImage(grpc::ServerContext* context,
     std::vector<uint8_t> image_data(request->image_data().begin(),
                                     request->image_data().end());
 
-    std::mutex writer_mutex;
+    auto writer_mutex = std::make_shared<std::mutex>();
+    auto done_cv = std::make_shared<std::condition_variable>();
+    auto done = std::make_shared<bool>(false);
 
     {
         std::lock_guard<std::mutex> lock(queue_mutex_);
-        task_queue_.push({request->image_id(), image_data, writer, &writer_mutex});
+        task_queue_.push({request->image_id(), image_data, writer, writer_mutex, done_cv, done});
     }
     queue_cv_.notify_one();
 
-    std::unique_lock<std::mutex> lock(writer_mutex);
-    queue_cv_.wait(lock, [this, &request]() {
-        std::lock_guard<std::mutex> queue_lock(queue_mutex_);
-        bool found = false;
-        std::queue<OCRTask> temp_queue = task_queue_;
-        while (!temp_queue.empty()) {
-            if (temp_queue.front().image_id == request->image_id()) {
-                found = true;
-                break;
-            }
-            temp_queue.pop();
-        }
-        return !found || shutdown_;
+    std::unique_lock<std::mutex> lock(*writer_mutex);
+    done_cv->wait(lock, [done]() {
+        return *done;
     });
 
     return grpc::Status::OK;
@@ -125,10 +117,11 @@ void OCRServiceImpl::WorkerThread() {
         {
             std::lock_guard<std::mutex> lock(*task.writer_mutex);
             task.writer->Write(response);
+            *task.done = true;
         }
 
         std::cout << "Completed image: " << task.image_id << std::endl;
-        queue_cv_.notify_all();
+        task.done_cv->notify_one();
     }
 
     ocr_engine.End();
