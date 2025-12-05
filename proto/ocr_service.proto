@@ -2,18 +2,28 @@ syntax = "proto3";
 
 package ocrservice;
 
+// ============================================================================
+// INTERPROCESS COMMUNICATION: gRPC Service Definition
+// ============================================================================
+// This defines the contract between client and server using Protocol Buffers.
+// gRPC automatically generates C++ code for both client and server from this.
+
 service OCRService {
+  // Server-side streaming RPC: Client sends one request, server sends multiple responses
+  // This allows real-time result delivery as each image is processed
   rpc ProcessImage(ImageRequest) returns (stream OCRResponse);
 }
 
+// Request message: Client sends image data to server
 message ImageRequest {
-  bytes image_data = 1;
-  string image_id = 2;
+  bytes image_data = 1;    // Binary image data (efficient transmission)
+  string image_id = 2;     // Filename for logging and tracking
 }
 
+// Response message: Server sends OCR results back to client
 message OCRResponse {
-  string image_id = 1;
-  string extracted_text = 2;
-  bool success = 3;
-  string error_message = 4;
+  string image_id = 1;        // Which image this result is for
+  string extracted_text = 2;  // The OCR text extracted from the image
+  bool success = 3;           // Whether OCR succeeded
+  string error_message = 4;   // Error details if OCR failed
 }
